@@ -1052,3 +1052,52 @@ class Cameras(TensorDataclass):
         # Adjust height/width
         self.width = base_tile_w + (col_indices < remainder_w).to(torch.int)
         self.height = base_tile_h + (row_indices < remainder_h).to(torch.int)
+
+    def rescale_output_resolution_uv(
+        self,
+        scaling_factor_w: Union[Shaped[Tensor, "*num_cameras"], Shaped[Tensor, "*num_cameras 1"], float, int],
+        scaling_factor_h: Union[Shaped[Tensor, "*num_cameras"], Shaped[Tensor, "*num_cameras 1"], float, int],
+        scale_rounding_mode: str = "floor",
+        ) -> None:
+        """Rescale the output resolution of the cameras.
+        Args:
+            scaling_factor_w: Scaling factor to apply to the output resolution width.
+            scaling_factor_h: Scaling factor to apply to the output resolution height.
+            scale_rounding_mode: round down or round up when calculating the scaled image height and width
+        """
+        if isinstance(scaling_factor_w, (float, int)):
+            scaling_factor_w = torch.tensor([scaling_factor_w]).to(self.device).broadcast_to((self.cx.shape))
+        elif isinstance(scaling_factor_w, torch.Tensor) and scaling_factor_w.shape == self.shape:
+            scaling_factor_w = scaling_factor_w.unsqueeze(-1)
+        elif isinstance(scaling_factor_w, torch.Tensor) and scaling_factor_w.shape == (*self.shape, 1):
+            pass
+        else:
+            raise ValueError(
+                f"Scaling factor must be a float, int, or a tensor of shape {self.shape} or {(*self.shape, 1)}. But got {scaling_factor_w}."
+            )
+        
+        if isinstance(scaling_factor_h, (float, int)):
+            scaling_factor_h = torch.tensor([scaling_factor_h]).to(self.device).broadcast_to((self.cy.shape))
+        elif isinstance(scaling_factor_h, torch.Tensor) and scaling_factor_h.shape == self.shape:
+            scaling_factor_h = scaling_factor_h.unsqueeze(-1)
+        elif isinstance(scaling_factor_h, torch.Tensor) and scaling_factor_h.shape == (*self.shape, 1):
+            pass
+        else:
+            raise ValueError(
+                f"Scaling factor must be a float, int, or a tensor of shape {self.shape} or {(*self.shape, 1)}."
+            )
+        self.fx = self.fx * scaling_factor_w
+        self.fy = self.fy * scaling_factor_h
+        self.cx = self.cx * scaling_factor_w
+        self.cy = self.cy * scaling_factor_h
+        if scale_rounding_mode == "floor":
+            self.height = (self.height * scaling_factor_h).to(torch.int64)
+            self.width = (self.width * scaling_factor_w).to(torch.int64)
+        elif scale_rounding_mode == "round":
+            self.height = torch.floor(0.5 + (self.height * scaling_factor_h)).to(torch.int64)
+            self.width = torch.floor(0.5 + (self.width * scaling_factor_w)).to(torch.int64)
+        elif scale_rounding_mode == "ceil":
+            self.height = torch.ceil(self.height * scaling_factor_h).to(torch.int64)
+            self.width = torch.ceil(self.width * scaling_factor_w).to(torch.int64)
+        else:
+            raise ValueError("Scale rounding mode must be 'floor', 'round' or 'ceil'.")

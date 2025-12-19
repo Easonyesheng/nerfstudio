@@ -1,3 +1,11 @@
+'''
+Author: Easonyesheng preacher@sjtu.edu.cn
+Date: 2025-12-19 14:43:18
+LastEditors: Easonyesheng preacher@sjtu.edu.cn
+LastEditTime: 2025-12-19 15:41:31
+FilePath: /nerfstudio/research/ref_ray/third_party/nerfstudio/nerfstudio/configs/dataparser_configs.py
+Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
+'''
 # Copyright 2022 the Regents of the University of California, Nerfstudio Team and contributors. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -36,6 +44,7 @@ from nerfstudio.data.dataparsers.scannet_dataparser import ScanNetDataParserConf
 from nerfstudio.data.dataparsers.scannetpp_dataparser import ScanNetppDataParserConfig
 from nerfstudio.data.dataparsers.sdfstudio_dataparser import SDFStudioDataParserConfig
 from nerfstudio.data.dataparsers.sitcoms3d_dataparser import Sitcoms3DDataParserConfig
+from nerfstudio.data.dataparsers.seven_scenes_dataparser import SevenScenesDataParserConfig
 from nerfstudio.plugins.registry_dataparser import discover_dataparsers
 
 dataparsers = {
@@ -54,6 +63,7 @@ dataparsers = {
     "sitcoms3d-data": Sitcoms3DDataParserConfig(),
     "scannetpp-data": ScanNetppDataParserConfig(),
     "colmap": ColmapDataParserConfig(),
+    "7scenes-data": SevenScenesDataParserConfig(),
 }
 
 external_dataparsers, _ = discover_dataparsers()
